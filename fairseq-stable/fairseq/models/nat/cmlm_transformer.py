@@ -414,7 +414,12 @@ class CMLMNATransformerDecoder(NATransformerDecoder):
         self.custom_loss = None
 
     def dynamic_upsample(self, x, mask):
-        l = x.new_ones(x.size(1), x.size(0)) * self.src_upsample
+        if x.size(0) * self.src_upsample > 1024: # > max position
+            rate = 1024 / float(x.size(0))
+        else:
+            rate = self.src_upsample + 0 
+        l = x.new_ones(x.size(1), x.size(0)) * rate           
+        # l = x.new_ones(x.size(1), x.size(0)) * self.src_upsample
         l = l.masked_fill(mask, 0)
         e = torch.cumsum(l, 1)
         c = e - l / 2

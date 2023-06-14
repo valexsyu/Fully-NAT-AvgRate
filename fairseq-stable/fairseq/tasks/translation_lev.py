@@ -58,6 +58,11 @@ class TranslationLevenshteinTask(TranslationTask):
             type=float, nargs='*',
             default=0.
         )
+        parser.add_argument(
+            '--inference-rate',
+            type=float,
+            default=3
+        )        
 
 
 
@@ -247,8 +252,9 @@ class TranslationLevenshteinTask(TranslationTask):
 
     def build_generator(self, models, args):
         # add models input to match the API for SequenceGenerator
-        from fairseq.iterative_refinement_generator import IterativeRefinementGenerator
-        return IterativeRefinementGenerator(
+        
+        from fairseq.iterative_refinement_generator import IterativeRefinementFixRateGenerator
+        return IterativeRefinementFixRateGenerator(
             self.target_dictionary,
             eos_penalty=getattr(args, 'iter_decode_eos_penalty', 0.0),
             max_iter=getattr(args, 'iter_decode_max_iter', 10),
@@ -257,7 +263,22 @@ class TranslationLevenshteinTask(TranslationTask):
             decoding_format=getattr(args, 'decoding_format', None),
             adaptive=not getattr(args, 'iter_decode_force_max_iter', False),
             retain_history=getattr(args, 'retain_iter_history', False),
-            collapse_repetition=getattr(args, 'iter_decode_collapse_repetition', False))
+            collapse_repetition=getattr(args, 'iter_decode_collapse_repetition', False),
+            inference_rate=getattr(args, 'inference_rate', 3))
+        
+        
+        # from fairseq.iterative_refinement_generator import IterativeRefinementGenerator
+        
+        # return IterativeRefinementGenerator(
+        #     self.target_dictionary,
+        #     eos_penalty=getattr(args, 'iter_decode_eos_penalty', 0.0),
+        #     max_iter=getattr(args, 'iter_decode_max_iter', 10),
+        #     beam_size=getattr(args, 'iter_decode_with_beam', 1),
+        #     reranking=getattr(args, 'iter_decode_with_external_reranker', False),
+        #     decoding_format=getattr(args, 'decoding_format', None),
+        #     adaptive=not getattr(args, 'iter_decode_force_max_iter', False),
+        #     retain_history=getattr(args, 'retain_iter_history', False),
+        #     collapse_repetition=getattr(args, 'iter_decode_collapse_repetition', False))
 
     def build_dataset_for_inference(self, src_tokens, src_lengths):
         return LanguagePairDataset(
